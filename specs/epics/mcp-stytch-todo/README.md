@@ -8,7 +8,7 @@ The port keeps the demo's Worker, its MCP server, its REST routes, its Stytch ch
 
 | Field | Value |
 |-------|-------|
-| Status | In progress — MT0 (the spec) |
+| Status | In progress — MT3 shipped (ready to instantiate); MT4 next |
 | Cluster | **MT** (MT0–MT4) |
 | Owner(s) | `apps/web` (`api/` the Worker, `src/` the front end, the wrangler template) · `tests/web` · `infra/terraform/cloudflare-kv` |
 | Builds on | `hono-api` (Hono on Workers: the app's name as a one-line seam, the health contract, the tests package); `r2-explorer` (the Workers + Static Assets composition, a Terraform root's wiring rendered into the config, optional Orun secrets handed to the Worker as Worker secrets); `kv-redis-starter` (the Cirrus KV root `cloudflare-kv`) |
