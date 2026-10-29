@@ -7,17 +7,19 @@ from Cloudflare's AI demos — a React todo list signed in with
 which an agent, authorized by the same user over OAuth, reads and edits the
 same todos — running on **one Cloudflare Worker + Static Assets**, with the
 todos in a Workers KV namespace provisioned by Terraform through
-[Orun](https://github.com/sourceplane/orun) — and, at its last milestone
-(MT4), packaged as an **Orun baseline**: one command taking a new product
-from nothing to live on stage and prod, in its own repository, under its own
-name, in ONE landing.
+[Orun](https://github.com/sourceplane/orun), and packaged as an **Orun
+baseline**: one command takes a new product from nothing to live on stage
+and prod, in its own repository, under its own name — in ONE landing.
 
 The Worker, its MCP server and its front end are upstream's: the MCP server
 is the Agents SDK's stateless `createMcpHandler` (no Durable Object), its
 tools upstream's `createTodo`, `markTodoComplete` and `deleteTodo`. **Stytch
 is optional**: a product is born without a Stytch project, and until one is
 connected the app still deploys and answers — its page says how to connect
-Stytch, and its API and MCP server refuse every caller. See
+Stytch, and its API and MCP server refuse every caller. What the baseline
+adds is everything needed to make a copy of it somebody else's, built the
+way [cirrus-baseline](https://github.com/sourceplane/cirrus-baseline) is
+since its one-landing bootstrap. See
 [`specs/epics/mcp-stytch-todo`](specs/epics/mcp-stytch-todo/README.md) for
 the design, the milestones and the as-built status.
 
@@ -27,7 +29,52 @@ the design, the milestones and the as-built status.
 > [Securing MCP Servers](https://github.com/cloudflare/agents/blob/main/docs/securing-mcp-servers.md)
 > before it is anyone's production.
 
-## What is here
+## Instantiating a product
+
+```bash
+git clone --depth 1 --branch <baseline-tag> https://github.com/sourceplane/mcp-stytch-todo
+cd mcp-stytch-todo
+orun new --blueprint repo-blueprint.yaml --out ~/sites/acme-tasks --run-hooks --resume \
+  --set reponame=acme-tasks --set productname="Acme Tasks" \
+  --set githuborg=acme-inc --set subdomain=<workers-dev-subdomain>
+```
+
+Or, once the platform's registry lists it, from the Orun console (Baselines →
+`mcp-stytch-todo` → Build). Two phases: **`01-product`** creates the
+repository and lands the whole product as ONE pull request — intent, CI,
+tooling, the KV root, the app and its tests — and one convergence applies
+the KV namespace on stage and prod and then deploys the app bound to it;
+**`02-docs`** records the live deployment from probed facts.
+**[BOOTSTRAP.md](BOOTSTRAP.md)** is the operator guide;
+[docs/phases/](docs/phases/README.md) has a page per phase.
+
+The only connection a build needs is Cloudflare. The app answers from the
+first deploy: the Worker reaches its namespace through its KV binding, so
+there is no storage key to paste, and its MCP server is at `/mcp`. The
+Stytch project — `STYTCH_PROJECT_ID`, `STYTCH_DOMAIN` and
+`STYTCH_PUBLIC_TOKEN`, three optional Orun secrets — is the owner's to store
+after the build; until then nobody can sign in and the page says how to
+connect it.
+
+The new repository receives the **product only** — the app, its KV root, its
+tests, its CI, its tooling, a README of its own and its operating contract —
+renamed throughout to the product's name, repository, Cloudflare Worker and
+namespace titles. None of this repository's machinery ships.
+
+| What makes it a baseline | Where |
+|---|---|
+| The console card (inputs, secrets, programme) | `blueprint.yaml` |
+| The build document (modules, phases, hooks) | `repo-blueprint.yaml` |
+| This tree's identity, and the bootstrap's task contracts | `.baseline/` |
+| The rename engine | `tooling/rebrand/rebrand.mjs` |
+| The bootstrap's helpers (deferrals, redeploy marker, work-tree strip) | `tooling/bootstrap/` |
+| The deployment-record renderer | `hooks/render-deployment-docs.sh` |
+| The product's README and context pack | `.baseline/product/README.md`, `ai/context/` |
+| The generated component docs | `*/docs/`, `tooling/catalog/gen-component-docs.py` |
+| The baseline's tests: contract, wiring, leak, offline bootstrap, end to end | `testing/`, `.github/workflows/baseline.yml` |
+| Cutting a `baseline-vN` tag | `.github/workflows/tag.yml` |
+
+## What is here (the product)
 
 | Surface | Where |
 |---|---|
@@ -146,9 +193,11 @@ step checks the config exists before it builds.
 
 ## CI
 
-| Workflow | What it runs |
-|---|---|
-| `ci.yml` | the Orun pipeline: `orun plan --changed`, then one job per lane. A pull request runs the verify lanes (the KV root planned for stage and prod, the page built and the Worker dry-deployed per environment, the tests run); a merge applies the KV namespace, then deploys stage → prod. It plans nothing while `intent.yaml` names the placeholder workspace `ws_CHANGE_ME`, as this repository does. A manual run (Run workflow on `main`) plans the environment and components it names under the push-to-main trigger, so they deploy as a merge deploys them |
+| Workflow | What it runs | Ships to a product |
+|---|---|---|
+| `ci.yml` | the Orun pipeline, and the only workflow a product carries: `orun plan --changed`, then one job per lane. A pull request runs the verify lanes (the KV root planned for stage and prod, the page built and the Worker dry-deployed per environment, the tests run), except the bootstrap's own landings (`orun/BASE-*`), where `plan` alone runs and nothing waits for it (the landing checked its commit in the box); a merge applies the KV namespace, then deploys stage → prod. It plans nothing while `intent.yaml` names the placeholder workspace `ws_CHANGE_ME`, as this repository does. A manual run (Orunbase's Deploy button, or Run workflow on `main`) plans the environment and components it names under the push-to-main trigger, so they deploy as a merge deploys them | yes |
+| `baseline.yml` | the baseline's own tiers: contract tests, the wiring path, the blueprint read by the pinned orun, the leak gate, the offline bootstrap with the product's own plan, the landing installed, type-checked, linted, tested and built, the product built in the job tree, dry-deployed and served — Stytch not connected, then connected | no |
+| `tag.yml` | cuts a `baseline-vN` tag (manual) | no |
 
 ## Credits
 

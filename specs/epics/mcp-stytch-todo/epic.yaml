@@ -9,7 +9,7 @@ metadata:
 spec:
   title: "Stytch's MCP todo app (Cloudflare's demo) on Cloudflare Workers with KV"
   summary: "Cloudflare's mcp-stytch-consumer-todo-list demo — a React todo list signed in with Stytch, the Hono REST API behind it, and a Model Context Protocol server through which an agent, authorized by the same Stytch user over OAuth, reads and edits the same todos — runs per environment on ONE Cloudflare Worker + Static Assets, the todos in a Workers KV namespace provisioned by Terraform through Orun, inside the Cirrus baseline's repository conventions. The app stays upstream's: the stateless `createMcpHandler` from the Agents SDK (no Durable Object), its tools, its REST routes and its Stytch JWT checks. What moves is where its configuration comes from — the Stytch project's id, domain and public token are three OPTIONAL Orun secrets (the id and domain pushed to the Worker as Worker secrets, the public token and domain handed to the front end's build); with none stored the product still builds, deploys and passes its smoke, and its page says how to connect Stytch — and where the namespace comes from (rendered per environment from the KV root's wiring document). The repository is an Orun baseline that instantiates the whole product in one landing."
-  state: started
+  state: completed
   milestones:
     - name: "MT0 — the spec"
       exitCriteria:

@@ -7,7 +7,8 @@ import { SITE_NAME } from "./src/site.ts";
 // serves as Static Assets (wrangler.jsonc). The Worker itself (api/index.ts)
 // is bundled by wrangler — in `wrangler dev` and in the deploy alike — so the
 // bundle that is tested is the bundle that ships. Upstream's
-// @cloudflare/vite-plugin is not used (specs/epics/mcp-stytch-todo/design.md §2).
+// @cloudflare/vite-plugin is not used: it bundles the Worker itself, into an
+// output `wrangler deploy --config wrangler.jsonc` does not read.
 //
 // VITE_STYTCH_PUBLIC_TOKEN and VITE_STYTCH_DOMAIN, when set, are compiled into
 // the page: public by Stytch's design (its front-end SDK needs both). Locally

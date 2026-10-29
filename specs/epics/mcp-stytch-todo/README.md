@@ -8,7 +8,7 @@ The port keeps the demo's Worker, its MCP server, its REST routes, its Stytch ch
 
 | Field | Value |
 |-------|-------|
-| Status | In progress — MT3 shipped (ready to instantiate); MT4 next |
+| Status | ✅ MT0–MT4 shipped ([#1](https://github.com/sourceplane/mcp-stytch-todo/pull/1)–[#5](https://github.com/sourceplane/mcp-stytch-todo/pull/5); MT4 tagged `baseline-v1`). A Terraform apply, a live deploy and a real Stytch sign-in are proven only by a live bootstrap (risk MT-L) |
 | Cluster | **MT** (MT0–MT4) |
 | Owner(s) | `apps/web` (`api/` the Worker, `src/` the front end, the wrangler template) · `tests/web` · `infra/terraform/cloudflare-kv` |
 | Builds on | `hono-api` (Hono on Workers: the app's name as a one-line seam, the health contract, the tests package); `r2-explorer` (the Workers + Static Assets composition, a Terraform root's wiring rendered into the config, optional Orun secrets handed to the Worker as Worker secrets); `kv-redis-starter` (the Cirrus KV root `cloudflare-kv`) |
@@ -16,6 +16,7 @@ The port keeps the demo's Worker, its MCP server, its REST routes, its Stytch ch
 | Changes | The Stytch project from three optional Orun secrets, and a Worker and a page that work without it; `/api/health`; the product's name on the page; the front end built by Vite alone and the Worker bundled by wrangler (no Cloudflare Vite plugin); the wrangler config rendered per environment; tests, the KV root, the deploy contract |
 | Decisions locked | (1) The Worker, its MCP server and its Stytch checks stay upstream's; the MCP server stays stateless (design §2). (2) Stytch is optional: with no project stored the product builds, deploys, passes its smoke and says how to connect it (design §3). (3) `STYTCH_PROJECT_ID` and `STYTCH_DOMAIN` reach the Worker as Worker secrets; `STYTCH_PUBLIC_TOKEN` and `STYTCH_DOMAIN` reach the front end's build, which publishes them, as Stytch's front-end SDK means them to be (design §3). (4) No Stytch project is created for the owner (design §6). (5) The namespace before the Worker on main: cloudflare-kv → web, enforced; advisory on pull requests. |
 | Gate | MT2 applies only with a linked workspace (a Cloudflare connection); verified by `terraform validate` and, from MT4, the offline end-to-end tier. |
+| Shipped as | `baseline-v1` ([#5](https://github.com/sourceplane/mcp-stytch-todo/pull/5)); proven offline (Baseline CI: the built Worker served under `wrangler dev` over a local namespace, driven with Stytch not connected and then connected; the REST API and the MCP server's tools in `tests/web`), deploy gated until a workspace is linked |
 
 ## Read order
 

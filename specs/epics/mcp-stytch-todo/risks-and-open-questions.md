@@ -97,3 +97,24 @@ Vite's hot module replacement.
 connection (the brokered `workers-deploy` token, which covers Workers KV).
 Until a workspace is linked, `ci.yml` plans nothing; the root is verified by
 `terraform validate` and, from MT4, by the offline bootstrap's plans.
+
+## MT-L — No live bootstrap yet (OPEN)
+
+Everything short of the platform and Stytch is proven on every pull request:
+the card against the build, the blueprint read by the pinned orun, the leak
+gate, the offline bootstrap with the blueprint's own hooks, the product's
+own plan (cloudflare-kv → web per environment, enforced on main, advisory on
+a pull request), and the produced product installed, built in the job tree
+— first as a fresh product, then with all three Stytch values planted in
+its environment, the project id found in nothing it wrote — dry-deployed
+with both bindings, served over a local namespace, smoke-tested, and driven
+unconnected and then connected; and `tests/web` drives the REST API and the
+MCP server's tools through the real Worker with tokens a test key signs.
+NOT proven: the repository created and linked, the keys minted by
+`integrations/reconcile`, a real `terraform apply` of the namespace (the
+root is held to `terraform validate`), a real `wrangler deploy`, `wrangler
+secret bulk` against a deployed Worker, the smoke and the probes over
+workers.dev — and a real Stytch sign-in, on the page and through an MCP
+client's OAuth flow against a Stytch project. What closes it: one bootstrap
+from a tag against a workspace with a Cloudflare connection, then a Stytch
+test project connected to its stage environment.

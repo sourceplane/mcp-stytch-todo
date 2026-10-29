@@ -11,7 +11,7 @@ at `34a8f4c`, MIT).
 | MT1 — the todo app and its MCP server on Workers | ✅ Shipped | [#2](https://github.com/sourceplane/mcp-stytch-todo/pull/2) (MT-2) |
 | MT2 — the KV namespace from Terraform | ✅ Shipped (validated; apply gated on a linked workspace) | [#3](https://github.com/sourceplane/mcp-stytch-todo/pull/3) (MT-3) |
 | MT3 — ready to instantiate | ✅ Shipped | [#4](https://github.com/sourceplane/mcp-stytch-todo/pull/4) (MT-4) |
-| MT4 — a baseline | Planned | — |
+| MT4 — a baseline | ✅ Shipped (offline-proven; no live bootstrap yet, risk MT-L) | [#5](https://github.com/sourceplane/mcp-stytch-todo/pull/5) (MT-5), tagged `baseline-v1` |
 
 ## Departures from the upstream demo
 
@@ -167,3 +167,64 @@ its id rendered into the `TODOS` binding from `WIRING_CLOUDFLARE_KV_<ENV>`;
 - Not verified: a Terraform apply, a live deploy and a real Stytch sign-in
   — they need the product linked to an Orun workspace with a Cloudflare
   connection, and a Stytch project (risks MT-A, MT-K).
+
+## MT4 — a baseline (MT-5)
+
+The repository is an Orun baseline on the Cirrus conventions, held to the
+starter standard and built the way turso-starter builds a product: ONE
+landing. `blueprint.yaml` is the card (`requires: [github, cloudflare]`;
+the two brokered keys — `CLOUDFLARE_API_TOKEN` (`workers-deploy`, which
+covers the KV apply too) and `CLOUDFLARE_ACCOUNT_ID` — as a preview, and the
+Stytch values deliberately not among them; the programme `01-product`,
+`02-docs`; `expectedMinutes` 6, the two phase cards' 5 + 1, an estimate).
+`repo-blueprint.yaml` places every module in `01-product` and lands it as
+one pull request; `02-docs` records the deployment from probed facts
+(`/api/health`: the namespace answering, and whether Stytch is connected;
+`/mcp`: the 401 naming its metadata) and puts the bootstrap's deferrals
+back.
+
+- **The rename engine** (`tooling/rebrand/rebrand.mjs`, Cirrus's engine,
+  this tree's rules): the repository slug, `SITE_NAME` (`MCP Todos` here),
+  the Worker, the namespace titles, the Stytch values' secret refs and the
+  Worker the deploy pushes them to, the domain placeholder and the
+  workers.dev subdomain. `UPSTREAM` masks Cloudflare's and Stytch's links to
+  the demo, whose name shares no word boundary with the slug — a guard
+  against a later rule, held by `testing/rebrand.test.sh`. The epic slug a
+  bootstrap files its task under is `todos-baselining`, which does not
+  contain the repository slug.
+- **The edge.** `web` on `cloudflare-kv` — `mode: enforced` on a push to
+  main, advisory on a pull request.
+- **The component docs** are generated (`tooling/catalog/gen-component-docs.py`)
+  and checked in Baseline CI.
+- **Tests' one change**: `site.test.ts` compares the title with the
+  escaped name, so a product named with an apostrophe or an ampersand (the
+  e2e fixture's `Sam's Tasks & Agents`) passes its own tests.
+
+### Verified (MT4)
+
+- Contract tests: manifest, phases, coverage, rebrand, retouch,
+  bootstrap-defer, wire; the component docs match their manifests; `orun
+  catalog validate` reports no errors.
+- The blueprint read by the bootstrap floor (`orun new --status`); the leak
+  gate (92 files derived, nothing local, built or provenance-shaped); the
+  offline bootstrap with the blueprint's own hooks, then the product's own
+  plan for the 01-product merge — cloudflare-kv → web on stage and prod,
+  enforced; advisory on a pull request; the 02-docs merge planning nothing —
+  and a `--resume` that changes nothing; the placed product still pinning
+  upstream's `agents`, MCP SDK and Hono, and linking Cloudflare's demo.
+- The end-to-end tier: the product installed, type-checked, linted, tested
+  and built; the stage web lane's own steps in the job tree orun stages —
+  as a fresh product (the Worker secrets step skipping all Stytch values,
+  the dry deploy binding the stage namespace and the assets, the Worker and
+  its page 209 KiB gzipped), served by `wrangler dev` over a local
+  namespace: the component's own smoke, the page under the product's name
+  (escaped), its entry script carrying the connect-Stytch notice and no
+  Stytch SDK, its single-page routes, the health route, the metadata with
+  no authorization server, `/mcp`'s 401 naming it, the todo API refusing a
+  forged session; then the lane again with random markers planted as all
+  three Stytch values — the project id in no file it wrote, the public
+  token and domain only in the page's app chunk, both named for
+  `<repo>-web-stage` by the Worker secrets step — served with the project
+  as the Worker's secrets: the smoke unchanged, the health route connected,
+  the metadata naming the Stytch domain, every unsigned token refused.
+- Not verified: everything risk MT-L names.
