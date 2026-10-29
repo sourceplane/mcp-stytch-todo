@@ -4,9 +4,9 @@ import { SITE_NAME } from "@/src/site.ts";
 
 // The page's <title> is the product's name (vite.config.ts → scripts/page-title.mjs).
 describe("the page's title (apps/web/scripts/page-title.mjs)", () => {
-  it("is the product's name", () => {
+  it("is the product's name, escaped", () => {
     const html = "<head><title>TODO MCP Server</title></head>";
-    expect(setTitle(html, SITE_NAME)).toBe(`<head><title>${SITE_NAME}</title></head>`);
+    expect(setTitle(html, SITE_NAME)).toBe(`<head><title>${escapeHtml(SITE_NAME)}</title></head>`);
   });
 
   it("escapes a name that carries markup", () => {

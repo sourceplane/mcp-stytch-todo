@@ -7,6 +7,6 @@ folder is the adoption; the merge creates the epic in the workspace.
 
 | Epic | Cluster | Status | What it is |
 |------|---------|--------|------------|
-| [`mcp-stytch-todo/`](./mcp-stytch-todo/) | **MT** | In progress (MT3 shipped; MT4 next) | Stytch's MCP todo app (Cloudflare's demo) — a React todo list, its REST API and an MCP server for agents, on one Cloudflare Worker + Static Assets with the todos in Workers KV from Terraform, and an Orun baseline that instantiates it in one landing (MT4) |
+| [`mcp-stytch-todo/`](./mcp-stytch-todo/) | **MT** | ✅ Shipped (`baseline-v1`); live bootstrap pending | Stytch's MCP todo app (Cloudflare's demo) — a React todo list, its REST API and an MCP server for agents, on one Cloudflare Worker + Static Assets with the todos in Workers KV from Terraform, and an Orun baseline that instantiates it in one landing (MT4) |
 
 As-built ≠ intent: what shipped lives in each epic's `IMPLEMENTATION-STATUS.md`.
