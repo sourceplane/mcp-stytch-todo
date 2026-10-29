@@ -1,0 +1,40 @@
+# The epic's declaration. metadata.name equals the directory name; metadata.key
+# is the task-key prefix this epic reserves (MT → MT-1, MT-2, …). Owner, target
+# date and health are the platform's — never written here.
+apiVersion: orun.io/v1
+kind: Epic
+metadata:
+  name: mcp-stytch-todo
+  key: MT
+spec:
+  title: "Stytch's MCP todo app (Cloudflare's demo) on Cloudflare Workers with KV"
+  summary: "Cloudflare's mcp-stytch-consumer-todo-list demo — a React todo list signed in with Stytch, the Hono REST API behind it, and a Model Context Protocol server through which an agent, authorized by the same Stytch user over OAuth, reads and edits the same todos — runs per environment on ONE Cloudflare Worker + Static Assets, the todos in a Workers KV namespace provisioned by Terraform through Orun, inside the Cirrus baseline's repository conventions. The app stays upstream's: the stateless `createMcpHandler` from the Agents SDK (no Durable Object), its tools, its REST routes and its Stytch JWT checks. What moves is where its configuration comes from — the Stytch project's id, domain and public token are three OPTIONAL Orun secrets (the id and domain pushed to the Worker as Worker secrets, the public token and domain handed to the front end's build); with none stored the product still builds, deploys and passes its smoke, and its page says how to connect Stytch — and where the namespace comes from (rendered per environment from the KV root's wiring document). The repository is an Orun baseline that instantiates the whole product in one landing."
+  state: started
+  milestones:
+    - name: "MT0 — the spec"
+      exitCriteria:
+        - "the doc set and the task contracts are on main, with the repository's intent, CI and tooling"
+      tasks: [MT-1]
+    - name: "MT1 — the todo app and its MCP server on Workers"
+      exitCriteria:
+        - "apps/web is the upstream demo: the Hono Worker (REST API, OAuth protected-resource metadata, the MCP server through createMcpHandler) over the `TODOS` KV binding, and the React front end in Static Assets, titled with the product's name"
+        - "with no Stytch project stored, the Worker answers: /api/health reads the namespace, /mcp refuses with a 401 that names its metadata, and the page says how to connect Stytch; with one, upstream's session and bearer checks"
+        - "the wrangler config renders per environment from the cloudflare-kv root's wiring document (fixture in verify, live in deploy)"
+        - "`pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm build` are green"
+      tasks: [MT-2]
+    - name: "MT2 — the KV namespace from Terraform"
+      exitCriteria:
+        - "infra/terraform/cloudflare-kv provisions the stage and prod namespaces and publishes the wiring document the app renders from"
+      tasks: [MT-3]
+    - name: "MT3 — ready to instantiate"
+      exitCriteria:
+        - "the README says how to run, test, preview and deploy it, and how its owner connects Stytch"
+        - "the as-built status records every departure from the upstream demo"
+      tasks: [MT-4]
+    - name: "MT4 — a baseline"
+      exitCriteria:
+        - "blueprint.yaml (the console card, requires [github, cloudflare]) and repo-blueprint.yaml (the build) take a new product from nothing to live on stage and prod in ONE landing, then record it (01-product, 02-docs)"
+        - "the product's own push-to-main plan applies cloudflare-kv before it deploys web, enforced on main and advisory on a pull request"
+        - "a product built from it carries the product only, renamed throughout to its own name, repository, Worker and namespace names"
+        - "Baseline CI is green: contract tests, the blueprint read by the pinned orun, the leak gate, the offline bootstrap and the product's plans, and the end-to-end tier — which serves the built Worker over a local namespace, Stytch not connected and then connected"
+      tasks: [MT-5]
