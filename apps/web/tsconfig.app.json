@@ -1,0 +1,16 @@
+{
+  "extends": "../../tooling/tsconfig/web.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    // The page imports the API's type for Hono's typed client, so the
+    // Worker's bindings are in scope here too (as upstream's are).
+    "types": ["vite/client", "@cloudflare/workers-types"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "types.d.ts", "cloudflare-env.d.ts"]
+}

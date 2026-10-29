@@ -1,0 +1,33 @@
+// GENERATED from wrangler.template.jsonc by tooling/wire — edit the
+// template, not this file. The committed copy is the fixture render
+// (`pnpm run wire:fixture`); every Orun lane renders its own environment.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mcp-stytch-todo-web",
+  // The Worker: the REST API, the OAuth metadata, the MCP server and the
+  // assets, in that order (api/index.ts). wrangler bundles it; Vite builds
+  // only the front end.
+  "main": "api/index.ts",
+  // Upstream's flags and date.
+  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2025-03-19",
+  "observability": { "enabled": true },
+  "upload_source_maps": true,
+  "dev": { "port": 3000 },
+  // The todos: one JSON list per Stytch user id. Upstream's binding name.
+  "kv_namespaces": [
+    { "binding": "TODOS", "id": "00000000000000000000000000000001" }
+  ],
+  // The front end, built by Vite into dist/client. Upstream's asset settings:
+  // the Worker sees every request first (the API, /mcp and the metadata are
+  // its), and a path without a file is the single-page app's.
+  "assets": {
+    "directory": "dist/client",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "single-page-application"
+  }
+  // STYTCH_PROJECT_ID and STYTCH_DOMAIN are Worker secrets, never vars: the
+  // deploy pushes them when the environment has them (component.yaml), and
+  // `wrangler dev` reads them from .dev.vars.
+}
