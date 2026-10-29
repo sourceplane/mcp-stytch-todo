@@ -1,0 +1,8 @@
+# Copy to .dev.vars for `pnpm dev` / `pnpm preview` (never committed): the
+# Worker's Stytch values, from the Stytch dashboard's Project settings.
+# Both are OPTIONAL. Without them the Worker refuses every session and every
+# MCP client (401) and names no authorization server; with BOTH, it checks
+# Stytch's tokens as upstream does. On a deployed environment they are the
+# Orun secrets of the same names, pushed to the Worker as Worker secrets.
+STYTCH_PROJECT_ID=
+STYTCH_DOMAIN=

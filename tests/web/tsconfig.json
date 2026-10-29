@@ -1,0 +1,18 @@
+{
+  "extends": "../../tooling/tsconfig/worker.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false,
+    "noEmit": true,
+    "allowJs": false,
+    "allowImportingTsExtensions": true,
+    "types": ["node", "@cloudflare/workers-types"],
+    "paths": {
+      "@/*": ["../../apps/web/*"],
+      "cloudflare:workers": ["./src/cloudflare-workers.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "vitest.config.ts", "../../apps/web/cloudflare-env.d.ts", "../../apps/web/types.d.ts"]
+}

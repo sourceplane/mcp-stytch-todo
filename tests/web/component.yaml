@@ -1,0 +1,23 @@
+apiVersion: sourceplane.io/v1
+kind: Component
+metadata:
+  name: web-tests
+  description: The app's vitest suite — the health route, the todo service, and the real Worker's REST API and MCP server with Stytch not connected and connected (tokens signed by a test key)
+spec:
+  type: turbo-package
+  lifecycle: production
+  owner: platform
+  domain: tests
+  subscribe:
+    environments:
+      - name: dev
+        profile: quick-check
+  parameters:
+    nodeVersion: "22"
+    pnpmVersion: "10.12.1"
+    buildCommand: pnpm exec turbo run build --filter=./
+    typecheckCommand: pnpm exec turbo run typecheck --filter=./
+    preBuildCommand: pnpm exec turbo run test --filter=./
+  labels:
+    team: platform
+    layer: test

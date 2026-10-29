@@ -1,0 +1,118 @@
+apiVersion: sourceplane.io/v1
+kind: Component
+metadata:
+  name: web
+  description: The todo app — Stytch's MCP todo demo on one Cloudflare Worker + Static Assets (the page, its REST API and the MCP server), over the KV namespace, per environment
+spec:
+  type: cloudflare-workers-assets-turbo
+  lifecycle: production
+  owner: platform
+  # `app`, not `web`: a domain and a component share one name space in the
+  # catalog, and a domain called `web` hid this component from it.
+  domain: app
+  path: apps/web
+  # Its own lane per environment, so each environment's deploy waits on its
+  # own namespace and nothing else.
+  lane: isolated
+  # INFRA BEFORE APP. The Worker binds the KV namespace by id, and the id is
+  # rendered into its config during the build from the wiring document the
+  # cloudflare-kv root lease-publishes after its apply. A job resolves its
+  # secrets when it STARTS, so on a merge to main this deploy waits for that
+  # environment's apply (enforced) and the document is there; a pull request
+  # deploys nothing, so nothing on one waits (advisory).
+  dependsOn:
+    - component: cloudflare-kv
+      mode: enforced
+      modeRules:
+        - mode: advisory
+          when:
+            triggerRef: github-pull-request
+  secretEnv:
+    WIRING_CLOUDFLARE_KV_STAGE: "secret://mcp-stytch-todo/mcp-stytch-todo/stage/WIRING_CLOUDFLARE_KV"
+    WIRING_CLOUDFLARE_KV_PROD: "secret://mcp-stytch-todo/mcp-stytch-todo/prod/WIRING_CLOUDFLARE_KV"
+  # The Stytch project, stored per environment as the product's secrets
+  # (README → "Connecting Stytch"): its id and domain, which the Worker checks
+  # every session and access token against, and its public token, which the
+  # page's Stytch SDK needs. The id and domain reach the Worker as Worker
+  # SECRETS; the public token and domain are compiled into the page, public by
+  # Stytch's design; the id reaches no bundle (buildCommand below).
+  # BEST-EFFORT, wire-now-seed-later: a key nobody has stored yet is skipped
+  # when the job resolves its secrets (no env var, no failure), and the app
+  # without them answers, refuses every caller and says how to connect Stytch
+  # — so a fresh product deploys and passes its smoke before its owner has a
+  # Stytch account at all.
+  optionalSecretEnv:
+    STYTCH_PROJECT_ID: "secret://mcp-stytch-todo/mcp-stytch-todo/{{ .environment }}/STYTCH_PROJECT_ID"
+    STYTCH_DOMAIN: "secret://mcp-stytch-todo/mcp-stytch-todo/{{ .environment }}/STYTCH_DOMAIN"
+    STYTCH_PUBLIC_TOKEN: "secret://mcp-stytch-todo/mcp-stytch-todo/{{ .environment }}/STYTCH_PUBLIC_TOKEN"
+  subscribe:
+    environments:
+      - name: dev
+        profile: verify
+      - name: stage
+        profile: verify
+        profileRules:
+          - profile: deploy
+            when:
+              triggerRef: github-push-main
+      - name: prod
+        profile: verify
+        profileRules:
+          - profile: deploy
+            when:
+              triggerRef: github-push-main
+  parameters:
+    nodeVersion: "22"
+    pnpmVersion: "10.12.1"
+
+    workspaceDir: ../..
+    appDir: .
+
+    turboFilter: "@app/web"
+    wranglerConfig: wrangler.jsonc
+
+    # The Worker's entry is its source: `wrangler deploy` bundles it (with
+    # Hono, the Agents SDK's MCP handler and jose) in the same command that
+    # uploads the page, bound as ASSETS. The build is Vite's, of the page only.
+    workerEntrypoint: api/index.ts
+    assetsDir: dist/client
+
+    # Per-env worker name: mcp-stytch-todo-web-{dev,stage,prod}.
+    workerName: mcp-stytch-todo-web
+    environmentAwareWorkerName: true
+
+    # The account's workers.dev subdomain; exported to the smoke step as
+    # ${WORKERS_DEV_SUBDOMAIN} and used to build ${DEPLOYED_URL}.
+    workersDevSubdomain: your-workers-subdomain
+
+    installCommand: pnpm install --frozen-lockfile
+    # Render this environment's wrangler config, then build. stage and prod
+    # render from the wiring document their cloudflare-kv apply published
+    # (secretEnv above, resolved before the job's first step); dev, which no
+    # root applies to and which only verifies, renders from the committed
+    # fixture. The committed wrangler.jsonc (the fixture render) is what the
+    # composition's verify-app-structure step finds before this runs. The
+    # page's build sees only VITE_STYTCH_PUBLIC_TOKEN and VITE_STYTCH_DOMAIN
+    # (empty when not stored: the page then says how to connect Stytch), never
+    # the Orun secrets themselves (`env -u`). Then, when the environment has
+    # them, STYTCH_PROJECT_ID and STYTCH_DOMAIN go to the Worker as SECRETS
+    # (tooling/wire/worker-secrets.mjs: `wrangler secret bulk`, the values over
+    # stdin) before the composition deploys it. Only the deploy lane holds a
+    # Cloudflare credential, so a verify lane builds the same and pushes
+    # nothing.
+    buildCommand: node ../../tooling/wire/live.mjs --template wrangler.template.jsonc --out wrangler.jsonc --components cloudflare-kv --env "${ORUN_ENVIRONMENT}" --fixture wiring.fixture.json --fixture-envs dev && env -u STYTCH_PROJECT_ID -u STYTCH_DOMAIN -u STYTCH_PUBLIC_TOKEN VITE_STYTCH_PUBLIC_TOKEN="${STYTCH_PUBLIC_TOKEN:-}" VITE_STYTCH_DOMAIN="${STYTCH_DOMAIN:-}" pnpm exec turbo run build --filter=@app/web && node ../../tooling/wire/worker-secrets.mjs --secret STYTCH_PROJECT_ID --secret STYTCH_DOMAIN --worker "mcp-stytch-todo-web-${ORUN_ENVIRONMENT}" --config wrangler.jsonc
+
+    # Smoke, read-only: /api/health — answered by the Worker itself, ahead of
+    # the API and the MCP server and whatever Stytch's state — reads one key of
+    # the namespace through its binding and answers `"ok":true` (an unbound or
+    # unreachable namespace is a 503). Then /mcp with no token is the 401 whose
+    # WWW-Authenticate names the protected-resource metadata — the MCP server's
+    # front door, connected or not. Then the page is served from Static Assets
+    # (`id="root"`, the app's mount point). Nothing is written. Responses are
+    # buffered before grep so an early match cannot SIGPIPE curl.
+    smokeCommand: "health=$(curl -sf \"${DEPLOYED_URL}/api/health\") && echo \"${health}\" | grep -q '\"ok\":true' && mcp=$(curl -s -o /dev/null -D - -X POST \"${DEPLOYED_URL}/mcp\") && echo \"${mcp}\" | grep -q '^HTTP/[0-9.]* 401' && echo \"${mcp}\" | grep -qi '^www-authenticate: Bearer .*resource_metadata=' && html=$(curl -sfL \"${DEPLOYED_URL}/\") && echo \"${html}\" | grep -q 'id=\"root\"'"
+  labels:
+    team: platform
+    layer: delivery
+    surface: web
+    runtime: cloudflare
