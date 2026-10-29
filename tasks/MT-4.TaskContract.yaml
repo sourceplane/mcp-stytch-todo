@@ -1,0 +1,17 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: MT-4
+  title: "Ready to instantiate"
+spec:
+  goal: A reader can run, test, preview, connect Stytch to and deploy the app from a fresh clone, and the as-built status records every departure from upstream
+  affects:
+    - README.md
+    - apps/web/README.md
+    - specs/epics/mcp-stytch-todo/**
+    - specs/epics/README.md
+    - tasks/MT-4.TaskContract.yaml
+  doneWhen:
+    - the README's quick start works from a fresh clone, Stytch not connected and connected
+    - IMPLEMENTATION-STATUS lists every PR and departure
+  gates: []

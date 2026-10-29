@@ -1,0 +1,20 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: MT-2
+  title: "The todo app and its MCP server on Workers"
+spec:
+  goal: apps/web is Cloudflare's mcp-stytch-consumer-todo-list demo — the Hono Worker with its REST API, its OAuth protected-resource metadata and its stateless MCP server over the TODOS KV binding, the React front end in Static Assets under the product's name — answering with or without a Stytch project, the wrangler config rendered per environment, with /api/health reading the namespace
+  affects:
+    - apps/web/**
+    - tests/web/**
+    - tooling/wire/worker-secrets.mjs
+    - pnpm-lock.yaml
+  doneWhen:
+    - pnpm typecheck, lint, test and build are green
+    - the committed wrangler.jsonc is its fixture render
+    - a dry-run deploy binds env.TODOS and env.ASSETS
+    - tests/web drives the REST API and the MCP server through the real Worker, Stytch not connected and connected
+    - wrangler dev serves the page with the connect-Stytch notice, /api/health and the 401 at /mcp
+  gates:
+    - checks
