@@ -69,6 +69,28 @@ spec:
           - profile: deploy
             when:
               triggerRef: github-push-main
+  # How the site runs itself for orun.work's live Preview tab
+  # (saas-parallel-baselining PB4): `orun preview` starts this, and a coding
+  # session keeps it running while it works, so the person watches it change
+  # as it is built. The dev server binds the box's loopback only, on a fixed
+  # port, and installs first, so a checkout the session has not installed yet
+  # still comes up.
+  # It is what the site's own `pnpm dev` (scripts/dev.mjs) runs, without pnpm
+  # in between: the front end built, then rebuilt on every save (`vite build
+  # --watch`, into dist/client), and the Worker served over it by `wrangler
+  # dev`, which reloads on the new assets. On 8787, wrangler's own default,
+  # not wrangler.jsonc's dev.port (3000), so a `pnpm dev` the session runs
+  # itself does not collide with it. wrangler refuses a port that is taken.
+  preview:
+    run:
+      - sh
+      - -c
+      - pnpm install --frozen-lockfile --prefer-offline --filter "@app/web..." && node_modules/.bin/vite build && { node_modules/.bin/vite build --watch --logLevel warn & } && exec node_modules/.bin/wrangler dev --ip 127.0.0.1 --port 8787 --show-interactive-dev-session=false
+    port: 8787
+    path: /
+    env:
+      NODE_OPTIONS: --max-old-space-size=512
+      WRANGLER_SEND_METRICS: "false"
   parameters:
     nodeVersion: "22"
     pnpmVersion: "10.12.1"
